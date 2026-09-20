@@ -2,9 +2,9 @@
 
 Spicetify custom app: a listening statistics dashboard inside Spotify (stats.fm, Last.fm, or local tracking).
 
-![GitHub release](https://img.shields.io/github/v/release/Xndr2/listening-stats)
+![GitHub release](https://img.shields.io/github/v/release/HeadshotInteractive/listening-stats)
 ![Spicetify](https://img.shields.io/badge/spicetify-2.x-1DB954)
-[![downloads](https://img.shields.io/github/downloads/Xndr2/listening-stats/total?style=flat&color=00b894&label=downloads)](https://github.com/Xndr2/listening-stats/releases)
+[![downloads](https://img.shields.io/github/downloads/HeadshotInteractive/listening-stats/total?style=flat&color=00b894&label=downloads)](https://github.com/HeadshotInteractive/listening-stats/releases)
 
 <img src="docs/screenshots/Screenshot01.png" alt="Listening Stats overview" />
 <img src="docs/screenshots/Screenshot02.png" alt="Listening Stats heatmap" />  
@@ -19,7 +19,7 @@ Spicetify custom app: a listening statistics dashboard inside Spotify (stats.fm,
 - **Export:** JSON / CSV where applicable
 - **Privacy:** data stays local; API calls only to providers you configure
 
-End-user guides and troubleshooting: **[Wiki](https://github.com/Xndr2/listening-stats/wiki)**.
+End-user guides and troubleshooting: **[Wiki](https://github.com/HeadshotInteractive/listening-stats/wiki)**.
 
 ## Requirements
 
@@ -34,18 +34,18 @@ End-user guides and troubleshooting: **[Wiki](https://github.com/Xndr2/listening
 **Linux / macOS**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Xndr2/listening-stats/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/HeadshotInteractive/listening-stats/main/install.sh | bash
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://raw.githubusercontent.com/Xndr2/listening-stats/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/HeadshotInteractive/listening-stats/main/install.ps1 | iex
 ```
 
 This does **not** install the Spicetify Marketplace (optional). You can add it later from [Spicetify docs](https://spicetify.app/docs/getting-started) if you want.
 
-**Manual:** grab **`listening-stats.zip`** from [Releases](https://github.com/Xndr2/listening-stats/releases), extract so you have `CustomApps/listening-stats/` containing `manifest.json`, `index.js`, and `extension.js`, then:
+**Manual:** grab **`listening-stats.zip`** from [Releases](https://github.com/HeadshotInteractive/listening-stats/releases), extract so you have `CustomApps/listening-stats/` containing `manifest.json`, `index.js`, and `extension.js`, then:
 
 ```bash
 spicetify config custom_apps listening-stats && spicetify apply

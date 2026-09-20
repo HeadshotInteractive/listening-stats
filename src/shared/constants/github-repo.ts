@@ -1,5 +1,5 @@
 /** Upstream repo (install script, announcements). */
-const GITHUB_REPO_OWNER = "Xndr2";
+const GITHUB_REPO_OWNER = "HeadshotInteractive";
 const GITHUB_REPO_NAME = "listening-stats";
 
 const GITHUB_REPO_SLUG = `${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`;
