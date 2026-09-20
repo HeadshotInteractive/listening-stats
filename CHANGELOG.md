@@ -3,5 +3,5 @@ Moved from an internal project to Headshot Interactive.
 Development will continue by @Xndr2 , just under the studio branch :)  
 
 ### Updated:
-- Every pointed from Xndr2 > HeadshotIneractive  
+- Every pointer from Xndr2 > HeadshotIneractive  
 So installer and updater don't fail
