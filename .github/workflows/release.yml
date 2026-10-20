@@ -30,6 +30,7 @@ jobs:
       - name: Create release zip
         run: |
           mkdir -p release/listening-stats
+          cp docs/screenshots/listening-stats-share.png release/preview.png
           cp dist/extension.js dist/index.js dist/manifest.json release/listening-stats/
           (cd release && zip -r listening-stats.zip listening-stats/)
           SHA256=$(sha256sum release/listening-stats.zip | cut -d' ' -f1)
@@ -58,6 +59,7 @@ jobs:
           cp release/latest-release.json .
           cp release/listening-stats.zip .
           cp release/listening-stats.zip.sha256 .
-          git add extension.js index.js manifest.json listening-stats latest-release.json listening-stats.zip listening-stats.zip.sha256
+          cp release/preview.png .
+          git add extension.js index.js manifest.json listening-stats latest-release.json listening-stats.zip listening-stats.zip.sha256 preview.png
           git commit -m "Release ${{ github.event.release.tag_name }}"
           git push origin dist-temp:dist --force
