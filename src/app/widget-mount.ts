@@ -4,11 +4,15 @@ import { injectStyles } from "./styles";
 
 const WIDGET_ROOT_ID = "listening-stats-widget-root";
 
+// Preferred first: the now-playing widget itself (class name, then the test id
+// newer clients keep). The left playbar region is only a last resort - it also
+// holds the cover art, so a pill placed there can overlap the artwork.
 const PLAYBAR_SELECTORS = [
 	".main-nowPlayingWidget-nowPlaying",
-	".main-nowPlayingBar-left",
 	'[data-testid="now-playing-widget"]',
+	".main-nowPlayingBar-left",
 ];
+const PREFERRED_MOUNT = PLAYBAR_SELECTORS.slice(0, 2).join(", ");
 
 export function findPlaybarMount(): HTMLElement | null {
 	for (const sel of PLAYBAR_SELECTORS) {
@@ -19,20 +23,42 @@ export function findPlaybarMount(): HTMLElement | null {
 }
 
 function startAttachLoop(container: HTMLElement): void {
+	let observer: MutationObserver | null = null;
+	let interval: ReturnType<typeof setInterval> | null = null;
+
 	const tryAttach = () => {
+		// A newer root took over (e.g. ours was detached and the other bundle
+		// mounted again). Retire instead of fighting it for the last-child slot.
+		const owner = document.getElementById(WIDGET_ROOT_ID);
+		if (owner && owner !== container) {
+			observer?.disconnect();
+			if (interval !== null) clearInterval(interval);
+			container.remove();
+			return;
+		}
+
+		const parent = container.parentElement;
 		// Cheap steady-state check: skip the selector queries while the widget
-		// is still attached somewhere in the document.
-		if (container.isConnected && container.parentElement !== document.body) return;
+		// sits in the now-playing widget proper.
+		if (container.isConnected && parent?.matches(PREFERRED_MOUNT)) {
+			// Spotify re-renders the cover art / track info and can insert those
+			// nodes after ours, which pushes the pill in front of the artwork.
+			// Keep it the last child so it stays after the track info.
+			if (container.nextElementSibling) parent.appendChild(container);
+			return;
+		}
+		// Detached, parked on <body>, or in the fallback region: (re)attach to
+		// the best mount available now.
 		const playbar = findPlaybarMount();
 		if (!playbar) return;
-		if (container.parentElement === playbar) return;
+		if (parent === playbar && !container.nextElementSibling) return;
 		playbar.appendChild(container);
 	};
 	tryAttach();
 
-	const observer = new MutationObserver(tryAttach);
+	observer = new MutationObserver(tryAttach);
 	observer.observe(document.body, { childList: true, subtree: true });
-	setInterval(tryAttach, 2000);
+	interval = setInterval(tryAttach, 2000);
 }
 
 /**

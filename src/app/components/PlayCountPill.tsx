@@ -66,7 +66,7 @@ export function PlayCountPill({
 		tooltip += ` · first on ${formatFirstPlayed(firstPlayedAt)}`;
 	}
 	if (periodStreams != null && periodLabel) {
-		tooltip += ` · ${periodStreams} in ${periodLabel} (stats.fm top tracks)`;
+		tooltip += ` · ${periodStreams} in ${periodLabel}`;
 	}
 
 	const playsLabel = count === 1 ? "1 play" : `${count} plays`;

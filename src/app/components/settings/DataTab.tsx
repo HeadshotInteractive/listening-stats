@@ -1,5 +1,6 @@
 import { EVENTS } from "../../../shared/constants/events";
 import { statsCache } from "../../../shared/stats/stats-cache";
+import { deleteCredentialMirror } from "../../../shared/storage/credential-mirror";
 import { db } from "../../../shared/storage/db";
 import { importFileEvents, type ParseResult, parseHistoryCsv, parseJsonEvents } from "../../../shared/storage/import";
 import { parseSpotifyZip, type SpotifyZipParseResult } from "../../../shared/storage/spotify-zip";
@@ -257,6 +258,7 @@ export function DataTab({ onRefresh }: Props) {
 			statsCache.invalidate();
 			// Legacy cache DB from the removed Last.fm world-charts backend
 			indexedDB.deleteDatabase("listening-stats-lastfm-cache");
+			await deleteCredentialMirror();
 			removePrefixedKeys(localStorage);
 			removePrefixedKeys(sessionStorage);
 			Spicetify.showNotification("All data wiped");

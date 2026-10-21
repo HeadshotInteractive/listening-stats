@@ -400,3 +400,49 @@ describe("TopLists columnOrder and per-column hide", () => {
 		expect(container.firstChild).toBeNull();
 	});
 });
+
+describe("TopLists local rank mode metric", () => {
+	beforeEach(async () => {
+		cleanup();
+		localStorage.clear();
+		const { providerRegistry } = await import("../shared/stats/provider");
+		const { localProvider } = await import("../shared/stats/local-provider");
+		providerRegistry._resetForTesting();
+		providerRegistry.register(localProvider);
+		providerRegistry.setActive("local");
+	});
+
+	afterEach(async () => {
+		const { providerRegistry } = await import("../shared/stats/provider");
+		providerRegistry._resetForTesting();
+		localStorage.clear();
+	});
+
+	async function renderLists() {
+		const { TopLists } = await import("../app/components/TopLists");
+		const stats = makeStats({
+			topTracks: [makeTrack({ count: 7, durationMs: 1_800_000 })],
+			topArtists: [makeArtist({ count: 7, durationMs: 1_800_000 })],
+		});
+		return render(React.createElement(TopLists, { stats, loading: false, hiddenSections: [] }))
+			.container as HTMLElement;
+	}
+
+	it("shows play counts when ranking by streams", async () => {
+		const { setRankMode } = await import("../shared/stats/rank-mode");
+		setRankMode("streams");
+		const container = await renderLists();
+		expect(findSectionCardByColumnId(container, "top-tracks")?.textContent).toContain("7 plays");
+		expect(findSectionCardByColumnId(container, "top-artists")?.textContent).toContain("7 plays");
+	});
+
+	it("shows listening time when ranking by minutes", async () => {
+		const { setRankMode } = await import("../shared/stats/rank-mode");
+		setRankMode("minutes");
+		const container = await renderLists();
+		expect(findSectionCardByColumnId(container, "top-tracks")?.textContent).toContain(formatDuration(1_800_000));
+		const artists = findSectionCardByColumnId(container, "top-artists")?.textContent ?? "";
+		expect(artists).toContain(formatDuration(1_800_000));
+		expect(artists).not.toContain("plays");
+	});
+});

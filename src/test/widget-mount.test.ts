@@ -58,6 +58,37 @@ describe("widget-mount", () => {
 		expect(document.getElementById(ROOT_ID)?.parentElement).toBe(playbar);
 	});
 
+	it("moves from the fallback playbar region into the now-playing widget once it appears", async () => {
+		const left = document.createElement("div");
+		left.className = "main-nowPlayingBar-left";
+		document.body.appendChild(left);
+
+		const { mountPlaybarWidget } = await importFreshWidgetMount();
+		mountPlaybarWidget();
+		expect(document.getElementById(ROOT_ID)?.parentElement).toBe(left);
+
+		const widget = document.createElement("div");
+		widget.className = "main-nowPlayingWidget-nowPlaying";
+		left.appendChild(widget);
+		await new Promise((r) => setTimeout(r, 0));
+		expect(document.getElementById(ROOT_ID)?.parentElement).toBe(widget);
+		left.remove();
+	});
+
+	it("stays the last child when Spotify re-renders nodes after it", async () => {
+		const playbar = document.createElement("div");
+		playbar.className = "main-nowPlayingWidget-nowPlaying";
+		document.body.appendChild(playbar);
+
+		const { mountPlaybarWidget } = await importFreshWidgetMount();
+		mountPlaybarWidget();
+		const cover = document.createElement("div");
+		cover.className = "cover-art";
+		playbar.appendChild(cover);
+		await new Promise((r) => setTimeout(r, 0));
+		expect(playbar.lastElementChild?.id).toBe(ROOT_ID);
+	});
+
 	it("prefers ReactDOM.createRoot over legacy render when available", async () => {
 		const rootRender = vi.fn();
 		const createRoot = vi.fn(() => ({ render: rootRender }));

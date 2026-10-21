@@ -1,3 +1,4 @@
+import { startCredentialMirror } from "../storage/credential-mirror";
 import { lastfmProvider } from "./lastfm-provider";
 import { localProvider } from "./local-provider";
 import { providerRegistry } from "./provider";
@@ -43,6 +44,7 @@ export async function initProviders(): Promise<void> {
 	if (initialized) return;
 	initialized = true;
 
+	await startCredentialMirror(); // restore provider keys a client update wiped, before anything reads them
 	pruneObsoleteKeys(); // once per install, before providers read localStorage
 
 	providerRegistry.register(localProvider);

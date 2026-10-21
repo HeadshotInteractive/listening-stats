@@ -1,3 +1,5 @@
+import { providerRegistry } from "../../shared/stats/provider";
+import { getRankMode } from "../../shared/stats/rank-mode";
 import type { StatsResult } from "../../shared/types/stats";
 import { normalizeSpotifyImageUrl } from "../../shared/util/spotify-image-url";
 import { formatDuration, formatNumber } from "../format";
@@ -49,6 +51,9 @@ export function TopLists({
 	activeGenre,
 }: TopListsProps) {
 	const prefs = getPreferences();
+	// Local lists are ordered by the Settings > Tracking rank mode; each row
+	// shows the metric it is ranked by so the order is visible.
+	const localRankMode = providerRegistry.getActiveId() === "local" ? getRankMode() : null;
 
 	const visibleColumns = prefs.columnOrder.filter((id) => !hiddenSections.includes(id));
 	if (visibleColumns.length === 0) return null;
@@ -122,7 +127,9 @@ export function TopLists({
 										}}
 									>
 										<span style={{ fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
-											{formatDuration(track.durationMs)}
+											{localRankMode === "streams"
+												? `${formatNumber(track.count)} plays`
+												: formatDuration(track.durationMs)}
 										</span>
 									</div>
 								) : null}
@@ -192,7 +199,11 @@ export function TopLists({
 										}}
 									>
 										{(!stats?.isFreeTier || artist.count > 0) && (
-											<span style={{ fontVariantNumeric: "tabular-nums" }}>{formatNumber(artist.count)} plays</span>
+											<span style={{ fontVariantNumeric: "tabular-nums" }}>
+												{localRankMode === "minutes"
+													? formatDuration(artist.durationMs)
+													: `${formatNumber(artist.count)} plays`}
+											</span>
 										)}
 										{primaryGenre && (
 											<>
@@ -287,7 +298,10 @@ export function TopLists({
 										{album.artistName}
 										{(!stats?.isFreeTier || album.count > 0) && (
 											<>
-												{" ·"} {formatNumber(album.count)} plays
+												{" ·"}{" "}
+												{localRankMode === "minutes"
+													? formatDuration(album.durationMs)
+													: `${formatNumber(album.count)} plays`}
 											</>
 										)}
 									</div>

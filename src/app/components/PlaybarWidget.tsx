@@ -2,11 +2,11 @@ import { fetchLastfmLifetimeTrackPlaycount, readLastfmUsername } from "../../sha
 import {
 	fetchStatsFmLifetimeTrackStreams,
 	fetchStatsFmPeriodTrackStreams,
-	readStatsFmUsername,
+	readStatsFmAccount,
 } from "../../shared/api/statsfm-track-plays";
 import { EVENTS } from "../../shared/constants/events";
-import { STATSFM_PERIODS } from "../../shared/stats/periods";
-import { providerRegistry } from "../../shared/stats/provider";
+import { LS_KEYS } from "../../shared/constants/storage-keys";
+import { STATSFM_PERIODS, STATSFM_PERIODS_PLUS } from "../../shared/stats/periods";
 import { restorePeriodForProvider } from "../../shared/stats/provider-periods-storage";
 import { db } from "../../shared/storage/db";
 import { getPreferences } from "../preferences";
@@ -45,19 +45,27 @@ function useNowPlayingCount(): TrackPlayInfo | null {
 			const localCount = events.length;
 			const localFirst = events[0]?.startedAt ?? null;
 
-			if (providerRegistry.getActiveId() === "statsfm") {
-				const user = readStatsFmUsername();
-				if (user) {
-					const lifetime = await fetchStatsFmLifetimeTrackStreams(user, uri);
+			// The widget is mounted from the extension bundle, whose provider
+			// registry is never initialised; localStorage is the shared source of
+			// truth for the provider the user picked in the app.
+			const activeProviderId = localStorage.getItem(LS_KEYS.ACTIVE_PROVIDER) ?? "local";
+			const item = Spicetify.Player.data?.item;
+			const trackName = item?.name as string | undefined;
+			const metadata = item?.metadata as Record<string, unknown> | undefined;
+			const artistName = metadata?.artist_name as string | undefined;
+
+			if (activeProviderId === "statsfm") {
+				const account = readStatsFmAccount();
+				if (account && trackName && artistName) {
+					const track = { uri, name: trackName, artistName };
+					const lifetime = await fetchStatsFmLifetimeTrackStreams(account.username, track);
 					let periodStreams: number | null = null;
 					let periodLabel: string | null = null;
 					if (prefs.playCountShowPeriodStreams) {
-						const supported = providerRegistry.getActive()?.getSupportedPeriods() ?? STATSFM_PERIODS;
-						if (supported.length > 0) {
-							const period = restorePeriodForProvider("statsfm", supported);
-							periodLabel = period.label;
-							periodStreams = await fetchStatsFmPeriodTrackStreams(user, uri, period.id);
-						}
+						const supported = account.isPlus ? STATSFM_PERIODS_PLUS : STATSFM_PERIODS;
+						const period = restorePeriodForProvider("statsfm", supported);
+						periodLabel = period.label;
+						periodStreams = await fetchStatsFmPeriodTrackStreams(account.username, track, period.id);
 					}
 					const count = lifetime ?? localCount;
 					const firstPlayedAt = lifetime != null ? null : localFirst;
@@ -66,20 +74,13 @@ function useNowPlayingCount(): TrackPlayInfo | null {
 				}
 			}
 
-			if (providerRegistry.getActiveId() === "lastfm") {
-				const username = readLastfmUsername();
-				if (username) {
-					const item = Spicetify.Player.data?.item;
-					const trackName = item?.name as string | undefined;
-					const metadata = item?.metadata as Record<string, unknown> | undefined;
-					const artistName = metadata?.artist_name as string | undefined;
-					if (trackName && artistName) {
-						const lifetime = await fetchLastfmLifetimeTrackPlaycount(artistName, trackName);
-						const count = lifetime ?? localCount;
-						const firstPlayedAt = lifetime != null ? null : localFirst;
-						commit({ count, firstPlayedAt, periodStreams: null, periodLabel: null });
-						return;
-					}
+			if (activeProviderId === "lastfm") {
+				if (readLastfmUsername() && trackName && artistName) {
+					const lifetime = await fetchLastfmLifetimeTrackPlaycount(artistName, trackName);
+					const count = lifetime ?? localCount;
+					const firstPlayedAt = lifetime != null ? null : localFirst;
+					commit({ count, firstPlayedAt, periodStreams: null, periodLabel: null });
+					return;
 				}
 			}
 

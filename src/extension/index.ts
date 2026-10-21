@@ -1,3 +1,5 @@
+import { EVENTS } from "../shared/constants/events";
+import { startCredentialMirror } from "../shared/storage/credential-mirror";
 import { initPlaylistScheduler } from "./playlist-scheduler";
 import { initTracker } from "./tracker/index";
 
@@ -59,6 +61,12 @@ const POLL_TIMEOUT_MS = 30_000;
 		});
 		initPlaylistScheduler();
 	}
+
+	// Restore provider connections a Spotify/Spicetify update wiped from
+	// localStorage. The playbar widget reads them, so tell it to refresh.
+	void startCredentialMirror().then((restored) => {
+		if (restored) window.dispatchEvent(new CustomEvent(EVENTS.PROVIDER_CHANGED));
+	});
 
 	poll();
 })();

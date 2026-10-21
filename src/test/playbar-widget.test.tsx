@@ -1,5 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setPreference } from "../app/preferences";
+import { _clearStatsFmTrackIdCache } from "../shared/api/statsfm-track-plays";
+import { LS_KEYS } from "../shared/constants/storage-keys";
 import { localProvider } from "../shared/stats/local-provider";
 import { providerRegistry } from "../shared/stats/provider";
 import { db } from "../shared/storage/db";
@@ -289,5 +291,37 @@ describe("PlaybarWidget", () => {
 		// count = 2, should now be visible
 		expect(container.querySelector(".play-count-pill")).not.toBeNull();
 		expect(container.querySelector(".play-count-pill")?.textContent).toContain("2 plays");
+	});
+
+	it("uses stats.fm counts when stats.fm is the active provider, even with an empty registry (extension bundle)", async () => {
+		const uri = "spotify:track:oldsong";
+		_clearStatsFmTrackIdCache();
+		// No local history for this track: before the fix this rendered "New play".
+		(Spicetify.Player as any).data = {
+			isPaused: false,
+			item: { uri, name: "Old Song", metadata: { artist_name: "Band" } },
+		};
+		providerRegistry._resetForTesting();
+		localStorage.setItem(LS_KEYS.ACTIVE_PROVIDER, "statsfm");
+		localStorage.setItem(LS_KEYS.STATSFM_CONFIG, JSON.stringify({ username: "alice", isPlus: false }));
+		setPreference("playCountShowPeriodStreams", false);
+		const fetchMock = vi.fn(async (url: string) => {
+			const body = String(url).includes("/search/elastic")
+				? {
+						items: { tracks: [{ id: 5, name: "Old Song", artists: [{ name: "Band" }], externalIds: { spotify: [] } }] },
+					}
+				: { items: { "5": { count: 41 } } };
+			return { ok: true, json: async () => body } as unknown as Response;
+		});
+		const originalFetch = globalThis.fetch;
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+		try {
+			const { PlaybarWidget } = await import("../app/components/PlaybarWidget");
+			Spicetify.ReactDOM.render(Spicetify.React.createElement(PlaybarWidget), container);
+			await new Promise((r) => setTimeout(r, 80));
+			expect(container.querySelector(".play-count-pill")?.textContent).toContain("41 plays");
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
 	});
 });
